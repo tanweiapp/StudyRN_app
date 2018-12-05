@@ -23,7 +23,6 @@ export default class LanguageDao {
                         var  data =this.flag===FLAG_LANGUAGE.flag_language?langsData:keys;
                         this.save(data);
                         resolve(data)
-                        alert(data);
 
                     }else{
                         try {

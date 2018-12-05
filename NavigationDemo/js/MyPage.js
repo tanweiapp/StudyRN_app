@@ -10,6 +10,7 @@ import {Platform,
     Alert,
 } from 'react-native';
 import Toast, {DURATION} from 'react-native-easy-toast'
+import LanguageDao,{FLAG_LANGUAGE} from './expand/dao/LanguageDao'
 const  KEY = 'test';
 export default class MyPage extends Component {
     static navigationOptions = {
@@ -22,6 +23,7 @@ export default class MyPage extends Component {
                   onPress={()=>{
                       this.props.navigation.navigate('CustomKeyPage',{
                           isRemoveKey:false,
+                          flag:FLAG_LANGUAGE.flag_key
                       });
                   }}
             >进入自定义标签页</Text>
@@ -36,9 +38,18 @@ export default class MyPage extends Component {
                   onPress={()=>{
                       this.props.navigation.navigate('CustomKeyPage',{
                           isRemoveKey:true,
+                          flag:FLAG_LANGUAGE.flag_language,
                       });
                   }}
             >进入标签移除页</Text>
+
+            <Text style={styles.tips}
+                  onPress={()=>{
+                      this.props.navigation.navigate('CustomKeyPage',{
+                          flag:FLAG_LANGUAGE.flag_language,
+                      });
+                  }}
+            >进入自定义语言页</Text>
         </View>
     }
 }

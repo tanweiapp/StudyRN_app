@@ -16,34 +16,53 @@ import {Platform,
     ListView,
     RefreshControl,
     DeviceEventEmitter,
+    TouchableOpacity,
+    Image,
 } from 'react-native';
 import ScrollableTabView,{ScrollableTabBar} from 'react-native-scrollable-tab-view'
 import Toast, {DURATION} from 'react-native-easy-toast'
 import DataRepository,{FLAG_STORAGE} from './expand/dao/DataRepository'
 import TrendingCell from './common/TrendingCell';
+import TimeSpan from './model/TimeSpan';
+// //import  Popover from  './common/Popover';
 import LanguageDao,{FLAG_LANGUAGE} from './expand/dao/LanguageDao'
 const  API_URL = 'https://github.com/trending/';
+var  timeSpanTextArray = [
+    new TimeSpan('今天','since=daily'),
+    new TimeSpan('本周','since=weekly'),
+    new TimeSpan('本月','since=monthly'),
+];
 
 export default class TrendingPage extends Component {
-    static navigationOptions = {
-        title:"TrendingPage",
-    }
-    constructor(props){
-        super(props);
-        this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_language);
-        // this.languageDao.remove();
-        this.dataRepository = new DataRepository(FLAG_STORAGE.flag_trending);
-        this.state={
-            languages:[]
-        }
-    }
-
     componentDidMount() {
         this.loadData();
         this.listener = DeviceEventEmitter.addListener('showToast',(text)=>{
             this.toast.show(text,DURATION.LENGTH_SHORT);
         })
     }
+    static navigationOptions = ({navigation,screenProps}) => ({
+        title:"TrendingPage",
+        headerTitle:(<View>
+        <TouchableOpacity>
+            <View style={{flexDirection:'row',alignItems:'center'}}>
+                <Text>趋势</Text>
+                <Image source={require('../res/images/ic_spinner_triangle.png')}/>
+            </View>
+        </TouchableOpacity>
+        </View>)//navigation.state.params?navigation.state.params.renderTitleView:null,
+    });
+    constructor(props){
+        super(props);
+        this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_language);
+        // this.languageDao.remove();
+        this.dataRepository = new DataRepository(FLAG_STORAGE.flag_trending);
+        this.state={
+            languages:[],
+            isVisible:false,
+            buttonRect:{},
+        }
+    }
+
     componentWillUnmount() {
         this.listener&& this.listener.remove();
     }
