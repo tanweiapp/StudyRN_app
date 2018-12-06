@@ -22,7 +22,6 @@ export default class MyPage extends Component {
         return<View style={styles.container}>
             <NavigationBar
                 title={'我的'}
-
                 statusBar={{backgroundColor:'#2196F3'}}
 
             />
@@ -37,7 +36,9 @@ export default class MyPage extends Component {
 
             <Text style={styles.tips}
                   onPress={()=>{
-                      this.props.navigation.navigate('SortKeyPage');
+                      this.props.navigation.navigate('SortKeyPage',{
+                          flag:FLAG_LANGUAGE.flag_key,
+                      });
                   }}
             >进入SortListView自定义标签排序页</Text>
 
@@ -57,6 +58,15 @@ export default class MyPage extends Component {
                       });
                   }}
             >进入自定义语言页</Text>
+
+            <Text style={styles.tips}
+                  onPress={()=>{
+                      this.props.navigation.navigate('SortKeyPage',{
+                          flag:FLAG_LANGUAGE.flag_language,
+                      });
+                  }}
+            >进入SortListView自定义语言排序页</Text>
+
         </View>
     }
 }

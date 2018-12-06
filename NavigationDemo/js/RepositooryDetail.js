@@ -24,7 +24,7 @@ export default class WebViewTest extends Component {
     }
     static navigationOptions = ({navigation,screenProps}) => ({
         // 这里面的属性和App.js的navigationOptions是一样的。
-        headerTitle:navigation.state.params.item.full_name ? navigation.state.params.item.full_name : navigation.state.params.item.fullName,
+        headerTitle:navigation.state.params.projectModel.item.full_name ? navigation.state.params.projectModel.item.full_name : navigation.state.params.projectModel.item.fullName,
         headerLeft:(
             <TouchableOpacity
                 onPress={navigation.state.params?navigation.state.params.leftClick:null}
@@ -47,8 +47,8 @@ export default class WebViewTest extends Component {
     });
     constructor(props){
         super(props);
-        this.url = this.props.navigation.state.params.item.html_url ? this.props.navigation.state.params.item.html_url : TRENDING_URL+this.props.navigation.state.params.item.fullName;
-        let title = this.props.navigation.state.params.item.full_name ? this.props.navigation.state.params.item.full_name : this.props.navigation.state.params.item.fullName;
+        this.url = this.props.navigation.state.params.projectModel.item.html_url ? this.props.navigation.state.params.projectModel.item.html_url : TRENDING_URL+this.props.navigation.state.params.item.fullName;
+        let title = this.props.navigation.state.params.projectModel.item.full_name ? this.props.navigation.state.params.projectModel.item.full_name : this.props.navigation.state.params.projectModel.item.fullName;
             this.state={
             url: this.url,
             title:title,

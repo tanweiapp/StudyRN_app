@@ -18,20 +18,23 @@ import {Platform,
     DeviceEventEmitter,
 } from 'react-native';
 import NavigationBar from './NavigationBar';
+import ProjectModel from './model/ProjectModel'
 import ScrollableTabView,{ScrollableTabBar} from 'react-native-scrollable-tab-view'
 import Toast, {DURATION} from 'react-native-easy-toast'
 import DataRepository,{FLAG_STORAGE} from './expand/dao/DataRepository'
 import RepositoryItemCell from './common/RepositoryItemCell'
+import FavoriteDao from './expand/dao/FavoriteDao'
+import Utils from './util/Utils'
 import LanguageDao,{FLAG_LANGUAGE} from './expand/dao/LanguageDao'
 const  URL = 'https://api.github.com/search/repositories?q=';
 const  QUERY_STR = '&sort=stars';
-
+var favoriteDao = new FavoriteDao(FLAG_STORAGE.flag_popular);
 export default class PopularPage extends Component {
 
     constructor(props){
         super(props);
         this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_key);
-        this.languageDao.remove();
+        // this.languageDao.remove();
         this.dataRepository = new DataRepository(FLAG_STORAGE.flag_popular);
         this.state={
             languages:[]
@@ -122,25 +125,68 @@ class  PopularTab extends  Component{
             result:'',
             dataSource:new ListView.DataSource({rowHasChanged:(r1,r2)=>r1!==r2}),
             isLoading:false,
+            favoriteKeys:[]
         }
     }
 
     componentDidMount() {
         this.loadData()
     }
-    renderRow(data){
+    onFavorite
+
+    renderRow(projectModel){
         return<RepositoryItemCell
-            onSelected={()=>this.onSelected(data)}
-            key={data.id}
-            data = {data}/>
+            onSelected={()=>this.onSelected(projectModel)}
+            key={projectModel.item.id}
+            projectModel = {projectModel}
+            onFavorite={(item,isFavorite)=>this.onFavorite(item,isFavorite)}
+        />
     }
     genFetchUrl(key){
         return URL + key + QUERY_STR;
     }
-    onSelected(item){
+    onSelected(projectModel){
         this.props.navigation.navigate('RepositooryDetail',{
-            item:item,
+            projectModel:projectModel,
         });
+    }
+
+    getFavoriteKeys(){
+        favoriteDao.getFavoriteKeys()
+            .then(keys=>{
+                if(keys){
+                    // 更新收藏的key
+                    this.updateState({favoriteKeys:keys})
+                }
+                this.flushFavoriteSate();
+            })
+            .catch(error=>{
+                this.flushFavoriteSate();
+            })
+    }
+
+    /**
+     * 更新Project Item Favorite 状态
+     *
+     * */
+    flushFavoriteSate(){
+        let  projectModels = [];
+       let items = this.items;
+       for(var i=0,len=items.length;i<len;i++){
+           projectModels.push(new  ProjectModel(items[i],Utils.checkFavorite(items[i],this.state.favoriteKeys)))
+       }
+       this.updateState({
+           isLoading:false,
+           dataSource:this.getDataSource(projectModels),
+       })
+    }
+
+    getDataSource(data){
+        return this.state.dataSource.cloneWithRows(data);
+    }
+    updateState(dic){
+        if (!this)return;
+        this.setState(dic);
     }
 
     loadData(){
@@ -151,29 +197,23 @@ class  PopularTab extends  Component{
         this.dataRepository
             .fetchRepository(url)
             .then(result=>{
-                let  items = result&&result.items? result.items:result?result:[];
-                this.setState({
-                    dataSource:this.state.dataSource.cloneWithRows(items),
-                    isLoading:false,
-                });
-
+                this.items = result&&result.items? result.items:result?result:[];
+                this.getFavoriteKeys();
                 if(result&&result.update_date&&!this.dataRepository.checkDate(result.update_date)){
                     DeviceEventEmitter.emit('showToast','数据过时');
                     return this.dataRepository.fetchNetRepository(url);
-                }else {
-                    DeviceEventEmitter.emit('showToast','显示缓存数据');
                 }
             })
             .then(items=>{
                 if(!items||items.length===0)return;
-                this.setState({
-                    dataSource:this.state.dataSource.cloneWithRows(items),
-                });
-                DeviceEventEmitter.emit('showToast','显示网络数据');
+                this.items = items;
+                this.getFavoriteKeys();
+
             })
             .catch(error=>{
-                this.setState({
-                    result:JSON.stringify(error)
+                this.updateState({
+                    result:JSON.stringify(error),
+                    isLoading:false,
                 })
             })
     }

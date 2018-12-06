@@ -20,14 +20,15 @@ const  KEY = 'test';
 export default class SortKeyPage extends Component {
     componentDidMount() {
         this.loadData();
+        title = this.flag===FLAG_LANGUAGE.flag_language?'自定义语言排序':'自定义语言排序';
         this.props.navigation.setParams({
-            title:'自定义Header',
+            title:title,
             leftClick:this._leftClick,
             rightClick:this._rightClick
         });
     }
     static navigationOptions = ({navigation,screenProps}) => ({
-        headerTitle:'自定义排序标签',
+        headerTitle:navigation.state.params.title ? navigation.state.params.title : 'defult page3',
         headerLeft:(
             <TouchableOpacity
                 onPress={navigation.state.params?navigation.state.params.leftClick:null}
@@ -51,7 +52,8 @@ export default class SortKeyPage extends Component {
 
     constructor(props){
         super(props);
-        this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_key);
+        this.flag = this.props.navigation.state.params.flag ? this.props.navigation.state.params.flag : '';
+        this.languageDao = new LanguageDao(this.flag);
         this.dataArray = [];
         this.sortResultArray = [];
         this.originalCheckedArray = [];

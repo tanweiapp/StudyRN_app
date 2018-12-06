@@ -20,9 +20,12 @@ const  KEY = 'test';
 export default class CustomKeyPage extends Component {
     属性给params
     componentDidMount(){
+        this.languageDao = new LanguageDao(this.flag);
         this.loadData();//
-        this.props.navigation.setParams({
-            title:this.isRemoveKey?'标签移除':'自定义标签',
+        let title = this.isRemoveKey?'标签移除':'自定义标签';
+        title = this.flag===FLAG_LANGUAGE.flag_language?'自定义语言':'自定义标签';
+            this.props.navigation.setParams({
+            title: title,
             rightTitle:this.isRemoveKey?'移除':'保存',
             leftClick:this._leftClick,
             rightClick:this._rightClick
@@ -53,7 +56,8 @@ export default class CustomKeyPage extends Component {
     });
     constructor(props){
         super(props);
-        this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_key);
+        this.flag = this.props.navigation.state.params.flag ? this.props.navigation.state.params.flag : '';
+
         this.changeValues = [];
         this.isRemoveKey = this.props.navigation.state.params.isRemoveKey?true:false
         this.state={
@@ -96,7 +100,9 @@ export default class CustomKeyPage extends Component {
             this.props.navigation.goBack();
         }
         for(let i=0,len=this.changeValues.length;i<len;i++){
-            ArrayUtils.remove(this.state.dataArray,this.changeValues[i]);
+            if (this.isRemoveKey) {
+                ArrayUtils.remove(this.state.dataArray, this.changeValues[i]);
+            }
         }
         this.languageDao.save(this.state.dataArray);
         this.props.navigation.goBack();
@@ -153,13 +159,13 @@ export default class CustomKeyPage extends Component {
         )
     }
     onCLick(data){
-       if(!this.isRemoveKey) {
+       // if(!this.isRemoveKey) {
            data.checked = !data.checked;
            this.setState({
                isChecked: !data.checked
            })
 
-       }
+       // }
         ArrayUtils.updateArray(this.changeValues,data);
     }
     render(){

@@ -27,11 +27,16 @@ import TrendingCell from './common/TrendingCell';
 import TimeSpan from './model/TimeSpan';
 import  Popover from  './common/Popover';
 import LanguageDao,{FLAG_LANGUAGE} from './expand/dao/LanguageDao'
+import ProjectModel from './model/ProjectModel'
+import FavoriteDao from './expand/dao/FavoriteDao'
 const  API_URL = 'https://github.com/trending/';
+import Utils from './util/Utils'
+var favoriteDao = new FavoriteDao(FLAG_STORAGE.flag_trending);
+var dataRepository = new DataRepository(FLAG_STORAGE.flag_trending);
 var  timeSpanTextArray = [
-    new TimeSpan('今天','since=daily'),
-    new TimeSpan('本周','since=weekly'),
-    new TimeSpan('本月','since=monthly'),
+    new TimeSpan('今 天','?since=daily'),
+    new TimeSpan('本 周','?since=weekly'),
+    new TimeSpan('本 月','?since=monthly'),
 ];
 
 export default class TrendingPage extends Component {
@@ -45,9 +50,10 @@ export default class TrendingPage extends Component {
         super(props);
         this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_language);
         // this.languageDao.remove();
-        this.dataRepository = new DataRepository(FLAG_STORAGE.flag_trending);
+        // this.dataRepository = new DataRepository(FLAG_STORAGE.flag_trending);
         this.state={
             languages:[],
+            timeSpan: timeSpanTextArray[0],
             isVisible:false,
             buttonRect:{},
         }
@@ -59,7 +65,7 @@ export default class TrendingPage extends Component {
                               onPress={()=>this.showPopover()}
             >
                 <View style={{flexDirection:'row',alignItems:'center'}}>
-                    <Text style={{fontSize:18,color:'white',fontWeight:'400'}}>趋势</Text>
+                    <Text style={{fontSize:18,color:'white',fontWeight:'400'}}>趋势 {this.state.timeSpan.showText}</Text>
                     <Image source={require('../res/images/ic_spinner_triangle.png')}
                            style={{width:14,height:14,marginLeft:6}}
                     />
@@ -116,8 +122,8 @@ export default class TrendingPage extends Component {
                 renderTabBar={()=><ScrollableTabBar />}
             >
                 {this.state.languages.map((result,i,arr)=>{
-                    let  lan=arr[i];
-                    return lan.checked?<TrendingTab key={i} tabLabel={lan.name} navigation={this.props.navigation}> JAVA</TrendingTab>:null
+                    let  item=arr[i];
+                    return item.checked?<TrendingTab key={i} tabLabel={item.name} navigation={this.props.navigation} timeSpan={this.state.timeSpan} /> :null
                 })}
 
             </ScrollableTabView>:null;
@@ -137,7 +143,7 @@ export default class TrendingPage extends Component {
                     >
                         <View>
                             <Text
-                                style={{fontSize:15,color:'white',fontWeight:'400',paddingTop:2,paddingLeft:6,paddingRight:6}}
+                                style={{fontSize:15,color:'white',fontWeight:'400',paddingTop:2,paddingLeft:8,paddingRight:8}}
                             >{arr[i].showText}</Text>
                         </View>
 
@@ -147,7 +153,7 @@ export default class TrendingPage extends Component {
         return (
             <View style={styles.container}>
                 <NavigationBar
-                    title={'趋势'}
+                    title={'趋势' + this.state.timeSpan}
                     titleView={this.renderTitleView()}
                     statusBar={{backgroundColor:'#2196F3'}}
 
@@ -170,65 +176,121 @@ export default class TrendingPage extends Component {
 class  TrendingTab extends  Component{
     constructor(props){
         super(props);
-        this.dataRepository = new DataRepository(FLAG_STORAGE.flag_trending);
 
         this.state={
             result:'',
             dataSource:new ListView.DataSource({rowHasChanged:(r1,r2)=>r1!==r2}),
             isLoading:false,
+            favoriteKeys:[]
         }
     }
 
     componentDidMount() {
-        this.loadData()
+        this.loadData(this.props.timeSpan,true);
     }
 
-    renderRow(data){
+    componentWillReceiveProps(nextProps) { //父组件状态发生变化，子组件进行监听刷新状态
+        if(nextProps.timeSpan !== this.props.timeSpan){
+            this.loadData(nextProps.timeSpan);
+        }
+    }
+
+    getFavoriteKeys(){
+        favoriteDao.getFavoriteKeys()
+            .then(keys=>{
+                if(keys){
+                    // 更新收藏的key
+                    this.updateState({favoriteKeys:keys})
+                }
+                this.flushFavoriteSate();
+            })
+            .catch(error=>{
+                this.flushFavoriteSate();
+            })
+    }
+
+    /**
+     * 更新Project Item Favorite 状态
+     *
+     * */
+    flushFavoriteSate(){
+        let  projectModels = [];
+        let items = this.items;
+        for(var i=0,len=items.length;i<len;i++){
+            projectModels.push(new  ProjectModel(items[i],Utils.checkFavorite(items[i],this.state.favoriteKeys)))
+        }
+        this.updateState({
+            isLoading:false,
+            dataSource:this.getDataSource(projectModels),
+        })
+    }
+
+    getDataSource(data){
+        return this.state.dataSource.cloneWithRows(data);
+    }
+    updateState(dic){
+        if (!this)return;
+        this.setState(dic);
+    }
+
+    renderRow(projectModel){
         return <TrendingCell
-            onSelected={()=>this.onSelected(data)}
-            key={data.id}
-            data = {data}/>
+            onSelected={()=>this.onSelected(projectModel)}
+            key={projectModel.item.id}
+            projectModel = {projectModel}
+            onFavorite={(item,isFavorite)=>this.onFavorite(item,isFavorite)}
+        />
     }
     getFetchUrl(timeSpan,category){
         return API_URL + category + timeSpan.searchText;//URL + key + QUERY_STR;
     }
-    onSelected(item){
+    onSelected(projectModel){
         this.props.navigation.navigate('RepositooryDetail',{
-            item:item,
+            projectModel:projectModel,
         });
     }
+    /**
+     * cell 点击回调函数
+     * */
+    onFavorite(item,isFavorite){
+        if(isFavorite){
+            favoriteDao.saveFavoriteItem(item.fullName.toString(),JSON.stringify(item));
+        }else {
+            favoriteDao.removeFavoriteItem(item.fullName.toString());
+        }
+    }
 
-    loadData(){
+    onRefresh(){
+        this.loadData(this.props.timeSpan);
+    }
+
+    loadData(timeSpan,isRefresh){
         this.setState({
             isLoading:true,
         });
-        let url = this.getFetchUrl('?since=daily',this.props.tabLabel);//URL + this.props.tabLabel + QUERY_STR;
-        this.dataRepository
+        let url = this.getFetchUrl(timeSpan.searchText,this.props.tabLabel);//URL + this.props.tabLabel + QUERY_STR;
+        dataRepository
             .fetchRepository(url)
             .then(result=>{
-                let  items = result&&result.items? result.items:result?result:[];
-                console.log(items);
-                this.setState({
-                    dataSource:this.state.dataSource.cloneWithRows(items),
-                    isLoading:false,
-                });
+                this.items = result&&result.items? result.items:result?result:[];
+                this.getFavoriteKeys();
 
-                if(result&&result.update_date&&!this.dataRepository.checkDate(result.update_date)){
+                if(result&&result.update_date&&!dataRepository.checkDate(result.update_date)){
                     DeviceEventEmitter.emit('showToast','数据过时');
-                    return this.dataRepository.fetchNetRepository(url);
+                    return dataRepository.fetchNetRepository(url);
                 }else {
                     DeviceEventEmitter.emit('showToast','显示缓存数据');
                 }
             })
             .then(items=>{
                 if(!items||items.length===0)return;
-                this.setState({
-                    dataSource:this.state.dataSource.cloneWithRows(items),
-                });
+                this.items = items;
+                this.getFavoriteKeys();
                 DeviceEventEmitter.emit('showToast','显示网络数据');
             })
             .catch(error=>{
-                this.setState({
+                this.updateState({
+                    isLoading:false,
                     result:JSON.stringify(error)
                 })
             })
@@ -242,7 +304,7 @@ class  TrendingTab extends  Component{
                 refreshControl = {
                     <RefreshControl
                     refreshing={this.state.isLoading}
-                    onRefresh={()=>this.loadData()}
+                    onRefresh={()=>this.onRefresh()}
                     colors={['#2196F3']}
                     tintColor={'#2196F3'}
                     title={'Loading...'}

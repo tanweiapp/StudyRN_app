@@ -7,18 +7,39 @@ export  default  class TrendingCell extends Component{
         super(props);
         console.log(this.props.data);
         this.state={
-
+            isFavorite:this.props.projectModel.isFavorite,
+            favoriteIcon:this.props.projectModel.isFavorite?require('../../res/images/ic_star.png'):require('../../res/images/ic_unstar_transparent.png')
         }
     }
+    onPressFavorite(){
+        this.setFavoriteState(!this.state.isFavorite);
+        this.props.onFavorite(this.props.projectModel.item,!this.state.isFavorite)
+    }
+    setFavoriteState(isFavorite){
+        this.setState({
+            isFavorite:isFavorite,
+            favoriteIcon:isFavorite?require('../../res/images/ic_star.png') : require('../../res/images/ic_unstar_transparent.png'),
+        })
+    }
+
     render(){
         const  {data} = this.props;
-        let  description = data.description;
+        let item = this.props.projectModel.item? this.props.projectModel.item: this.props.projectModel;
+        let  description = item.description;
+        let  favoriteButton = <TouchableOpacity
+            onPress={()=>this.onPressFavorite()}
+        >
+            <Image
+                style={{width:22,height:22,tintColor:'#2196F3'}}
+                source={this.state.favoriteIcon}
+            />
+        </TouchableOpacity>
         return <TouchableOpacity
             style={styles.container}
             onPress={this.props.onSelected}
         >
             <View style={styles.cell_container}>
-                <Text style={styles.title}>{data.fullName}</Text>
+                <Text style={styles.title}>{item.fullName}</Text>
                 <HTMLView
                     value={description}
                     onLinkLongPress={(url) => {}}
@@ -27,11 +48,11 @@ export  default  class TrendingCell extends Component{
                         a:styles.description
                     }}
                 />
-                <Text style={styles.description}>{data.meta}</Text>
+                <Text style={styles.description}>{item.meta}</Text>
                 <View style={{flexDirection:'row',justifyContent:'space-between'}}>
                     <View style={{flexDirection:'row',alignItems:'center'}}>
                         <Text style={styles.author}>Build by:</Text>
-                        {data.contributors.map((result,i,arr)=>{
+                        {item.contributors.map((result,i,arr)=>{
                             return <Image
                                 key={i}
                                 style={{height:22,width:22}}
@@ -40,10 +61,7 @@ export  default  class TrendingCell extends Component{
                         })}
 
                     </View>
-                    <Image
-                        style={{width:22,height:22}}
-                        source={require('../../res/images/ic_star.png')}
-                    />
+                    {favoriteButton}
                 </View>
 
             </View>
