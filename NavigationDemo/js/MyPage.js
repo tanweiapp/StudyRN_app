@@ -11,6 +11,7 @@ import {Platform,
 } from 'react-native';
 import Toast, {DURATION} from 'react-native-easy-toast'
 import LanguageDao,{FLAG_LANGUAGE} from './expand/dao/LanguageDao'
+import  NavigationBar from './NavigationBar'
 const  KEY = 'test';
 export default class MyPage extends Component {
     static navigationOptions = {
@@ -19,6 +20,12 @@ export default class MyPage extends Component {
 
     render(){
         return<View style={styles.container}>
+            <NavigationBar
+                title={'我的'}
+
+                statusBar={{backgroundColor:'#2196F3'}}
+
+            />
             <Text style={styles.tips}
                   onPress={()=>{
                       this.props.navigation.navigate('CustomKeyPage',{
@@ -57,7 +64,6 @@ export default class MyPage extends Component {
 const styles=StyleSheet.create({
     container:{
         flex:1,
-
     },
     tips:{
         fontSize:18,

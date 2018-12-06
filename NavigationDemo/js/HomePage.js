@@ -60,7 +60,7 @@ export default class HomePage extends Component {
                 <Button
                     title="Go To TabNavigator"
                     onPress={() =>{
-                        navigation.navigate('TabNav',{title:'TabNav'})
+                        navigation.replace('TabNav')
                     }}
                 />
                 <Toast ref={toast=>this.toast=toast}

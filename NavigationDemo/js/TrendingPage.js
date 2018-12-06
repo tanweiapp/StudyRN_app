@@ -20,11 +20,12 @@ import {Platform,
     Image,
 } from 'react-native';
 import ScrollableTabView,{ScrollableTabBar} from 'react-native-scrollable-tab-view'
+import  NavigationBar from './NavigationBar'
 import Toast, {DURATION} from 'react-native-easy-toast'
 import DataRepository,{FLAG_STORAGE} from './expand/dao/DataRepository'
 import TrendingCell from './common/TrendingCell';
 import TimeSpan from './model/TimeSpan';
-// //import  Popover from  './common/Popover';
+import  Popover from  './common/Popover';
 import LanguageDao,{FLAG_LANGUAGE} from './expand/dao/LanguageDao'
 const  API_URL = 'https://github.com/trending/';
 var  timeSpanTextArray = [
@@ -40,17 +41,6 @@ export default class TrendingPage extends Component {
             this.toast.show(text,DURATION.LENGTH_SHORT);
         })
     }
-    static navigationOptions = ({navigation,screenProps}) => ({
-        title:"TrendingPage",
-        headerTitle:(<View>
-        <TouchableOpacity>
-            <View style={{flexDirection:'row',alignItems:'center'}}>
-                <Text>趋势</Text>
-                <Image source={require('../res/images/ic_spinner_triangle.png')}/>
-            </View>
-        </TouchableOpacity>
-        </View>)//navigation.state.params?navigation.state.params.renderTitleView:null,
-    });
     constructor(props){
         super(props);
         this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_language);
@@ -61,6 +51,42 @@ export default class TrendingPage extends Component {
             isVisible:false,
             buttonRect:{},
         }
+    }
+
+    renderTitleView(){
+        return <View>
+            <TouchableOpacity ref = 'button'
+                              onPress={()=>this.showPopover()}
+            >
+                <View style={{flexDirection:'row',alignItems:'center'}}>
+                    <Text style={{fontSize:18,color:'white',fontWeight:'400'}}>趋势</Text>
+                    <Image source={require('../res/images/ic_spinner_triangle.png')}
+                           style={{width:14,height:14,marginLeft:6}}
+                    />
+                </View>
+            </TouchableOpacity>
+        </View>
+    }
+    showPopover() {
+        this.refs.button.measure((ox, oy, width, height, px, py) => {
+            this.setState({
+                isVisible: true,
+                buttonRect: {x: px, y: py, width: width, height: height}
+            });
+        });
+    }
+
+    closePopover(){
+        this.setState({
+            isVisible:false,
+        })
+    }
+
+    onSelectTimeSpan(timeSpan){
+        this.setState({
+            timeSpan:timeSpan,
+            isVisible:false,
+        })
     }
 
     componentWillUnmount() {
@@ -74,7 +100,6 @@ export default class TrendingPage extends Component {
                        languages: result
                    })
                }
-
             })
             .catch(error=>{
                 console.log(error);
@@ -96,9 +121,39 @@ export default class TrendingPage extends Component {
                 })}
 
             </ScrollableTabView>:null;
+
+        let  timeSpanView =
+            <Popover
+                isVisible = {this.state.isVisible}
+                fromRect = {this.state.buttonRect}
+                placement="bottom"
+                onClose = {()=>this.closePopover()}
+                contentStyle={{backgroundColor:'#343434',opacity:0.82}}
+            >
+                {timeSpanTextArray.map((result,i,arr)=>{
+                    return <TouchableOpacity key={i}
+                                             underlayColor='transparent={}'
+                                             onPress={()=>this.onSelectTimeSpan(arr[i])}
+                    >
+                        <View>
+                            <Text
+                                style={{fontSize:15,color:'white',fontWeight:'400',paddingTop:2,paddingLeft:6,paddingRight:6}}
+                            >{arr[i].showText}</Text>
+                        </View>
+
+                    </TouchableOpacity>
+                })}
+            </Popover>
         return (
             <View style={styles.container}>
+                <NavigationBar
+                    title={'趋势'}
+                    titleView={this.renderTitleView()}
+                    statusBar={{backgroundColor:'#2196F3'}}
+
+                />
                 {content}
+                {timeSpanView}
                 <Toast ref={toast=>this.toast=toast}
                        style={{backgroundColor:'darkgray'}}
                        position='top'
@@ -203,8 +258,8 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         // justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#F5FCFF',
+        // alignItems: 'center',
+        // backgroundColor: '#F5FCFF',
     },
     welcome: {
         fontSize: 20,

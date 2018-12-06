@@ -1,5 +1,5 @@
 
-import {StackNavigator,TabNavigator,TabBarBottom} from 'react-navigation';
+import {StackNavigator,TabNavigator,createBottomTabNavigator,TabBarBottom} from 'react-navigation';
 import HomePage from '../js/HomePage'
 import Page1 from '../js/Page1'
 import PopularPage from '../js/PopularPage'
@@ -16,6 +16,8 @@ import React, {Component} from 'react';
 import {Platform, StyleSheet, Text, View, Button,Image} from 'react-native';
 import  Ionicons from  'react-native-vector-icons/Ionicons'
 
+const MainIcon = require('../res/images/ic_polular.png');
+
 class  TabBarComponent extends  React.Component {
     constructor(props)
     {
@@ -26,7 +28,7 @@ class  TabBarComponent extends  React.Component {
         };
     }
     render(){
-        const {routes,index} = this.props.navigationState;
+            const {routes,index} = this.props.navigationState;
         const {theme} = routes[index].params;
         if (theme && theme.updateTime > this.theme.updateTime){
             this.theme = theme;
@@ -38,17 +40,45 @@ class  TabBarComponent extends  React.Component {
     }
 }
 
-export const AppTabNavigator = TabNavigator({
+const TabOptions2 = (tabBarTitle,normalImage,navTitle) => {
+    // console.log(navigation);
+    const tabBarLabel = tabBarTitle;
+    const tabBarIcon = (({tintColor,focused})=> {
+        return(
+            <Image
+                source={normalImage}
+                style={[{height:27,width:27 }, {tintColor: tintColor}]}
+            />
+        )
+    });
+    const headerTitle = navTitle;
+    const headerTitleStyle = {fontSize:22,color:'white',alignSelf:'center'};
+    // header的style
+    const headerStyle = {backgroundColor:'#4ECBFC'};
+    const tabBarVisible = true;
+    // const header = null;
+    return {title:headerTitle,tabBarLabel,tabBarIcon,headerTitle,headerTitleStyle,headerStyle,tabBarVisible};
+
+};
+
+const TabOptions = (tabBarTitle, normalImage) => {
+    const title = tabBarTitle;
+    const tabBarIcon = ({ focused }: { focused: boolean }) => {
+        const color =  '#aaa';
+        return (
+            <Image
+                source={normalImage}
+                style={[{height:27,width:27 }, {tintColor: color}]}
+            />
+        );
+    };
+    const tabBarVisible = true;
+    return { title, tabBarVisible, tabBarIcon };
+};
+export const AppTabNavigator = createBottomTabNavigator({
     PopularPage:{
         screen:PopularPage,
-        navigationOptions: {
-            title:'Popular',
-            tabBarLabel:'热门',
-            tabBarIcon: ({tintColor,focused}) => (
-            <Image style={{width:27,height:27}} source={require('../res/images/ic_polular.png')}/>
-
-            )
-        }
+        navigationOptions: ()=> TabOptions('热门',MainIcon,'Popular'),
     },
     TrendingPage:{
         screen:TrendingPage,
@@ -96,11 +126,59 @@ export const AppTabNavigator = TabNavigator({
         }
 
     }
-},{
-    tabBarComponent:TabBarComponent
+// },{
+//     tabBarComponent:TabBarComponent,
+    // initialRouteName: 'PopularPage',
+    // swipeEnabled: true,
+    // animationEnabled: true,
+    // lazy: false,
+    // tabBarPosition:'bottom',
 });
 
 export const AppStackNavigator = StackNavigator({
+        TabNav:{
+            screen:AppTabNavigator,
+            navigationOptions:({navigation}) => {
+                 console.log(navigation)
+                const routes = navigation.state.routes;
+                const params = routes ? routes[navigation.state.index].params : null;
+
+                let headerTitle = params ? params.title : routes[navigation.state.index].routeName;
+
+                const headerTitleStyle = {
+                    fontSize:  16,
+                    color: 'white',
+                    flex: 1,
+                    textAlign: 'center',
+                    paddingTop:   17
+                };
+                const headerBackTitle = null;
+                const headerTintColor = 'white';
+                const headerStyle = {
+                    backgroundColor: '#2196F3',
+                    shadowColor: 'transparent',
+                    shadowOpacity: 0,
+                    borderBottomWidth: 0,
+                    borderBottomColor: 'transparent',
+                    elevation: 0
+                };
+
+                // 识兔这里的导航都是手动控制的，所以这里设置为null就可以隐藏了。
+               const header = null;
+
+                return {
+                    headerTitle,
+                    headerStyle,
+                    headerTitleStyle,
+                    headerBackTitle,
+                    headerTintColor,
+                    header
+                };
+            }
+            // navigationOptions: ({navigation}) => ({
+            //     title:`${navigation.state.params.title}`// 动态穿值
+            // })
+        },
     HomePage:{
         screen:HomePage
     },
@@ -146,12 +224,7 @@ export const AppStackNavigator = StackNavigator({
                 }
             }
         },
-        TabNav:{
-            screen:AppTabNavigator,
-            navigationOptions: ({navigation}) => ({
-                title:`${navigation.state.params.title}`// 动态穿值
-            })
-        },
+
 }
     ,{
         navigationOptions:{
@@ -159,6 +232,6 @@ export const AppStackNavigator = StackNavigator({
             headerStyle:{
                 backgroundColor:'#2196F3',
             }
-        }
+        },
     }
     );

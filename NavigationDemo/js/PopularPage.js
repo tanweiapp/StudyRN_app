@@ -17,6 +17,7 @@ import {Platform,
     RefreshControl,
     DeviceEventEmitter,
 } from 'react-native';
+import NavigationBar from './NavigationBar';
 import ScrollableTabView,{ScrollableTabBar} from 'react-native-scrollable-tab-view'
 import Toast, {DURATION} from 'react-native-easy-toast'
 import DataRepository,{FLAG_STORAGE} from './expand/dao/DataRepository'
@@ -26,9 +27,7 @@ const  URL = 'https://api.github.com/search/repositories?q=';
 const  QUERY_STR = '&sort=stars';
 
 export default class PopularPage extends Component {
-    static navigationOptions = {
-        title:"PopularPage",
-    }
+
     constructor(props){
         super(props);
         this.languageDao = new LanguageDao(FLAG_LANGUAGE.flag_key);
@@ -94,7 +93,13 @@ export default class PopularPage extends Component {
 
             </ScrollableTabView>:null;
         return (
-            <View style={styles.container}>
+            <View style={{flex: 1}}>
+                <NavigationBar
+                    title={'最热标签'}
+
+                    statusBar={{backgroundColor:'#2196F3'}}
+
+                />
                 {content}
                 <Toast ref={toast=>this.toast=toast}
                        style={{backgroundColor:'darkgray'}}
