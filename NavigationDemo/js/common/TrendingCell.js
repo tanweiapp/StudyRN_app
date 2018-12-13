@@ -5,7 +5,6 @@ import HTMLView from 'react-native-htmlview';
 export  default  class TrendingCell extends Component{
     constructor(props){
         super(props);
-        console.log(this.props.data);
         this.state={
             isFavorite:this.props.projectModel.isFavorite,
             favoriteIcon:this.props.projectModel.isFavorite?require('../../res/images/ic_star.png'):require('../../res/images/ic_unstar_transparent.png')

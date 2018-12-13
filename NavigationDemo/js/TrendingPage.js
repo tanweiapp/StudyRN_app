@@ -245,6 +245,7 @@ class  TrendingTab extends  Component{
         return API_URL + category + timeSpan.searchText;//URL + key + QUERY_STR;
     }
     onSelected(projectModel){
+        // alert(JSON.stringify(projectModel));
         this.props.navigation.navigate('RepositooryDetail',{
             projectModel:projectModel,
         });
@@ -254,9 +255,9 @@ class  TrendingTab extends  Component{
      * */
     onFavorite(item,isFavorite){
         if(isFavorite){
-            favoriteDao.saveFavoriteItem(item.fullName.toString(),JSON.stringify(item));
+            favoriteDao.saveFavoriteItem(item.fullName,JSON.stringify(item));
         }else {
-            favoriteDao.removeFavoriteItem(item.fullName.toString());
+            favoriteDao.removeFavoriteItem(item.fullName);
         }
     }
 
